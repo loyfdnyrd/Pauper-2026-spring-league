@@ -442,10 +442,16 @@ document.addEventListener("DOMContentLoaded", () => {
         responsive: true,
         maintainAspectRatio: false,
 
+        interaction: {
+mode: 'nearest',
+intersect: true,
+        },
+
         plugins: {
           legend: { display: false },
 
           tooltip: {
+          enabled: true,
             callbacks: {
               title: (ctx) => ctx[0].raw.decks.join(", "),
               label: (ctx) => {
