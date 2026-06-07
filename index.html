@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Pauper 2026 Spring League Summary</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --text: #e6e9f5;
+      --pink: #ff6ec7;
+      --chart-text:#0b1020;
+      --chart-height: 400px;
+      --bar-color: #37e7ff;
+      --text-font: 'Space Grotesk';
+      --chart-text-weight: 500;
+      --text-size: 15px;
+      --shadow: 0 16px 40px rgba(6, 10, 22, 0.45);
+      --border: rgba(120, 140, 210, 0.2);
+    }
+
+    body {
+      margin: 0;
+      padding: 7%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--text-font);
+      font-size: var(--text-size);
+      line-height: 1.6;
+    }
+
+   .layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(16px, 4vw, 5%);
+  align-items: start;
+}
+
+    .left {
+      
+  display: flex;
+  flex-direction: column;
+  gap: 5%;
+
+    }
+
+    .right {
+  display: flex;
+  flex-direction: column;
+  gap: 5%;
+}
+
+.left, .right {
+  min-width: 0;
+}
+
+    h1 { font-family: var(--text-font); }
+
+    h2 {
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: var(--pink);
+    }
+h3{
+  color: var(--bar-color);
+  margin-bottom:0px;
+}
+h4 {
+  margin-top:0px;
+}
+    .chart-container {
+      height: var(--chart-height);
+      width: 100%;
+     
+    }
+.border {
+
+   border-radius: 16px;
+      border: 2px solid var(--border);
+      padding: 16px 16px 16px 28px;
+      box-shadow: var(--shadow);
+      box-sizing: border-box;
+      margin-top: 20px;
+      padding-bottom: 30px;
+}
+
+.tables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7%;
+}
+
+#token-winners {
+  padding-bottom: 80px;
+}
+
+
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      background: rgba(13, 18, 34, 0.85);
+      border-bottom: 1px solid rgba(90, 110, 180, 0.35);
+    }
+
+    th {
+      background: rgba(10, 14, 26, 0.95);
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    canvas { cursor: default; }
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+    
+  </style>
+</head>
+
+<body>
+
+<h1>Pauper Spring 2026 Summary</h1>
+<h2>Full meta game and graphs</h2>
+<div class="layout">
+
+  <div class="left">
+    <div class="border">
+    <h2>Meta game (all decks)</h2>
+    <table id="table1"></table>
+  </div>
+  <div class="border">
+    <h2>Top 8</h2>
+    <table id="table2"></table>
+    </div>
+  </div>
+
+  <div class="right">
+<div class="border">
+    <h2>Appearances vs Win rate</h2>
+    <p>Most played decks are higher up, decks with higher win rates more to the right. Hover bubble to see deck name.</p>
+    <div class="chart-container">
+      <canvas id="chart3"></canvas>
+    </div>
+    </div>
+<div class="border">
+    <h2>Top 1 placements</h2>
+    <h3>Winner</h3>
+    <h4>Caw Gates & Dimir Terror</h4>
+    <div class="chart-container">
+      <canvas id="chart1"></canvas>
+    </div>
+</div>
+<div class="border">
+    <h2>Top 1 placement rate</h2>
+      <h3>Winner</h3>
+    <h4>Elves</h4>
+    <div class="chart-container">
+      <canvas id="chart2"></canvas>
+    </div>
+    </div>
+    <div class="border" id="token-winners">
+<h2>Token winners</h2><div class="chart-container">
+    <h3>Winner</h3>
+    <h4>UB Faeries</h4>
+    <canvas id="chart4"></canvas>
+    
+</div>
+</div>
+
+<div class="border">
+  <h2>Match wins vs Token average</h2>
+  <p>Decks with more wins are higher up, decks with more tokens won per event are more to the right. Hover bubble to see deck name.</p>
+<div class="chart-container">
+  <canvas id="chart5"></canvas>
+</div>
+  </div>
+  </div>
+  </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const root = getComputedStyle(document.documentElement);
+
+  const textColor = root.getPropertyValue('--text').trim();
+  const barColor = root.getPropertyValue('--bar-color').trim();
+  const textFont = root.getPropertyValue('--text-font').trim();
+  const chartText = root.getPropertyValue('--chart-text').trim();
+
+  const chartFont = {
+    family: textFont,
+    size: 15,
+    weight: 500
+  };
+
+  Chart.register(ChartDataLabels);
+
+  const url =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8aAPrSCmM2JcjnaiHlfSSiqAw28avcu9oiT62-oaXuIVIXQIMKTq34FOVZcRVcoGsPIUNSXuzl4rl/pub?gid=744239752&single=true&output=csv";
+
+  const table1 = document.getElementById("table1");
+  const visibleCols1 = [0, 1, 2, 5, 6];
+  const table2 = document.getElementById("table2");
+  const visibleCols2 = [11, 12, 13];
+
+  // =========================
+  // LOAD CSV
+  // =========================
+  Papa.parse(url, {
+    download: true,
+    skipEmptyLines: true,
+    complete: (result) => {
+
+      const rows = result.data;
+
+      // =========================
+      // TABLE 1
+      // =========================
+      table1.innerHTML = "";
+      const fragment = document.createDocumentFragment();
+
+      rows.forEach((row, i) => {
+        const tr = document.createElement("tr");
+
+        row.forEach((cell, colIndex) => {
+          if (!visibleCols1.includes(colIndex)) return;
+
+          const el = document.createElement(i === 0 ? "th" : "td");
+          el.textContent = (cell || "").trim();
+          tr.appendChild(el);
+        });
+
+        fragment.appendChild(tr);
+      });
+
+      table1.appendChild(fragment);
+
+      // =========================
+      // TABLE 2
+      // =========================
+      table2.innerHTML = "";
+      const frag = document.createDocumentFragment();
+
+      rows.forEach((row, i) => {
+         if (i === 0) {
+    // header
+  } else if (i > 8) {
+    return; // skip all rows after row 8
+  }
+        const tr = document.createElement("tr");
+
+        
+
+        row.forEach((cell, colIndex) => {
+          if (!visibleCols2.includes(colIndex)) return;
+
+          const el = document.createElement(i === 0 ? "th" : "td");
+          el.textContent = (cell || "").trim();
+          tr.appendChild(el);
+        });
+
+        frag.appendChild(tr);
+      });
+
+      table2.appendChild(frag);
+
+      // =========================
+      // SCATTER DATA
+      // =========================
+  const tokenScatterData = rows.slice(1)
+  .map(r => {
+    const deck = (r[0] || "").trim();
+
+    const wins = Number(r[4]);
+
+    const tokenAvgRaw = (r[8] || "").toString().trim();
+    const tokenAvg = parseFloat(tokenAvgRaw.replace(",", "."));
+
+    if (!deck || isNaN(wins) || isNaN(tokenAvg)) return null;
+
+    if (tokenAvg < 0.1) return null;
+
+    return {
+      deck,
+      wins,
+      tokenAvg
+    };
+  })
+  .filter(Boolean);
+      const scatterData = rows.slice(1)
+        .map(r => {
+          const deck = r[0];
+          const appearances = Number(r[1]);
+          const winrate = parseFloat(String(r[5] || "").replace("%", "").trim());
+        
+          
+
+          if (!deck || isNaN(appearances) || isNaN(winrate)   ) return null;
+          
+
+          return { deck, appearances, winrate };
+        })
+        .filter(Boolean);
+
+      createScatterChart("chart3", scatterData);
+      createTokenScatter("chart5", tokenScatterData);
+    }
+  });
+
+  // =========================
+  // DOUGHNUT
+  // =========================
+  function createDoughnutChart(id, labels, data) {
+
+    const colors = [
+      "#C9B458","#5FA8FF","#7B7FA6","#4E79D9",
+      "#6FCF97","#F2E6C2","#9AA0A6","#7A5C3E","#8FE0D0"
+    ];
+
+    new Chart(document.getElementById(id), {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: textColor,
+              font: chartFont
+            }
+          },
+          datalabels: {
+            color: chartText,
+            font: chartFont
+          }
+        }
+      }
+    });
+  }
+
+  // =========================
+  // BAR CHART
+  // =========================
+  function createBarChart(id, labels, data) {
+
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: barColor,
+          borderRadius: 6,
+          barThickness: 20
+        }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            color: chartText,
+            font: chartFont,
+            formatter: (v) => v + "%"
+          }
+        },
+        scales: {
+          x: {
+            ticks: { display: false },
+            grid: { display: false }
+          },
+          y: {
+            ticks: {
+              color: textColor,
+              font: chartFont
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // =========================
+  // SCATTER CHART 1
+  // =========================
+  function createScatterChart(id, dataPoints) {
+
+    const grouped = new Map();
+
+    dataPoints.forEach(d => {
+  if (!d) return;
+      const key = `${d.winrate}-${d.appearances}`;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          x: d.winrate,
+          y: d.appearances,
+          decks: []
+        });
+      }
+
+      grouped.get(key).decks.push(d.deck);
+    });
+
+    new Chart(document.getElementById(id), {
+      type: "scatter",
+      data: {
+        datasets: [{
+          label: "Decks",
+          data: Array.from(grouped.values()),
+          pointRadius: 6,
+          pointHoverRadius: 9
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        plugins: {
+          legend: { display: false },
+
+          tooltip: {
+            callbacks: {
+              title: (ctx) => ctx[0].raw.decks.join(", "),
+              label: (ctx) => {
+                const p = ctx.raw;
+                return [
+                  `Winrate: ${p.x}%`,
+                  `Appearances: ${p.y}`
+                ];
+              }
+            }
+          },
+
+          datalabels: { display: false }
+        },
+
+        scales: {
+          x:  {
+          ticks: {
+            color: textColor
+          },
+            min: 0,
+            max: 100,
+            title: {
+              display: true,
+              text: "Winrate (%)",
+              color: textColor,
+              font: chartFont
+            }
+          },
+          y:{ 
+          ticks: {
+          color: textColor},
+          
+            title: {
+              display: true,
+              text: "Appearances",
+              color: textColor,
+              font: chartFont
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // =========================
+  // SCATTER CHART 2
+  // =========================
+  function createTokenScatter(id, dataPoints) {
+
+  const grouped = new Map();
+
+  dataPoints.forEach(d => {
+    const key = `${d.wins}-${d.tokenAvg}`;
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        y: d.wins,
+        x: d.tokenAvg,
+        decks: []
+      });
+    }
+
+    grouped.get(key).decks.push(d.deck);
+  });
+
+  new Chart(document.getElementById(id), {
+    type: "scatter",
+    data: {
+      datasets: [{
+        label: "Decks",
+        data: Array.from(grouped.values()),
+        pointRadius: 6,
+        pointHoverRadius: 9
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: { display: false },
+
+        tooltip: {
+          callbacks: {
+            title: (ctx) => ctx[0].raw.decks.join(", "),
+            label: (ctx) => {
+              const p = ctx.raw;
+              return [
+                `Wins: ${p.y}`,
+                `Token avg won: ${p.x}`
+              ];
+            }
+          }
+        },
+
+        datalabels: { display: false }
+      },
+
+      scales: {
+        x: {
+          ticks: {
+            color: textColor
+          },
+          title: {
+            display: true,
+            text: "Average tokens won",
+            color: textColor,
+            font: chartFont
+          }
+        },
+        y: {
+          ticks: {
+            color: textColor
+          },
+          title: {
+            display: true,
+            text: "Total match wins",
+            color: textColor,
+            font: chartFont
+          }
+          
+        }
+      }
+    }
+  });
+}
+
+  // =========================
+  // TOKEN BAR CHART (NEW)
+  // =========================
+  function createTokenBarChart(id, labels, data) {
+
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: barColor,
+          borderRadius: 6,
+          barThickness: 16
+        }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            color: chartText,
+            font: chartFont
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.raw} tokens`
+            }
+          }
+        },
+
+        scales: {
+          x: {
+            ticks: { display:false,
+              color: textColor,
+              font: chartFont
+            },
+            grid: { display: false }
+          },
+          y: {
+            ticks: {
+              color: textColor,
+              font: chartFont
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  
+
+  // =========================
+  // INIT
+  // =========================
+  createDoughnutChart(
+    "chart1",
+    ['Caw Gates','U Terror','UB Faeries','Dimir Terror','Elves','Jeskai Ephemerate','Grixis Affinity','Jund Wildfire','Walls Combo'],
+    [3,3,2,2,2,1,1,1,1]
+  );
+
+  createBarChart(
+    "chart2",
+    ['Elves','Walls Combo','Dimir Terror','Caw Gates','U Terror','Jund Wildfire','Grixis Affinity','UB Faeries','Jeskai Ephemerate'],
+    [50,50,40,28,21,20,14,12,8]
+  );
+
+  createTokenBarChart(
+    "chart4",
+    [
+      "UB Faeries","G Monster Tron","Mono Red Madness","U Terror","Jeskai Ephemerate",
+      "Caw gates","White Weenie","Grixis Affinity","BG Gardens","Walls Spy",
+      "Dimir Terror","Jund Wildfire","BR Madness","Red Rally","Elves"
+    ],
+    [16,11,9,8,8,7,7,7,6,4,3,3,2,2,2]
+  );
+
+});
+</script>
+</body>
+</html>
