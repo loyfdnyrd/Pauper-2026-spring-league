@@ -122,10 +122,44 @@ h4 {
 
     canvas { cursor: default; }
 
+    .table-toggle {
+  display: none;
+  margin-top: 10px;
+}
+
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: 1fr;
   }
+
+
+  .extra-row {
+    display: none;
+  }
+
+  .extra-row.show {
+    display: table-row;
+  }
+
+  .table-toggle {
+    display: inline-block;
+  }
+}
+
+button {
+  color: var(--bar-color);
+  width: 100%;
+  border: none;
+  background-color: var(--bg);
+  font-family: var(--text-font);
+  border: var(--border);
+  font-weight: var(--chart-text-weight);
+  font-size: var(--text-size)
+
+}
+
+button:hover {
+ 
 }
     
   </style>
@@ -139,8 +173,9 @@ h4 {
 
   <div class="left">
     <div class="border">
-    <h2>Meta game (all decks)</h2>
+    <h2>Meta game</h2>
     <table id="table1"></table>
+    <button id="toggleTable" class ="table-toggle">Show all decks</button>
   </div>
   <div class="border">
     <h2>Top 8</h2>
@@ -158,14 +193,16 @@ h4 {
     </div>
 <div class="border">
     <h2>Top 1 placements</h2>
-    <h3>Winner</h3>
-    <h4>Caw Gates & Dimir Terror</h4>
+    <p>Number of times a deck placed 1st</p>
+    <h3>Winners</h3>
+    <h4>Caw Gates & U Terror</h4>
     <div class="chart-container">
       <canvas id="chart1"></canvas>
     </div>
 </div>
 <div class="border">
     <h2>Top 1 placement rate</h2>
+    <p>How often a deck placed 1st</p>
       <h3>Winner</h3>
     <h4>Elves</h4>
     <div class="chart-container">
@@ -174,6 +211,7 @@ h4 {
     </div>
     <div class="border" id="token-winners">
 <h2>Token winners</h2><div class="chart-container">
+  <p>How many tokens each deck won</p>
     <h3>Winner</h3>
     <h4>UB Faeries</h4>
     <canvas id="chart4"></canvas>
@@ -183,7 +221,7 @@ h4 {
 
 <div class="border">
   <h2>Match wins vs Token average</h2>
-  <p>Decks with more wins are higher up, decks with more tokens won per event are more to the right. Hover bubble to see deck name.</p>
+  <p>Decks with more wins are higher up, decks with more tokens won per event are more to the right. Hover/tap bubble to see deck name.</p>
 <div class="chart-container">
   <canvas id="chart5"></canvas>
 </div>
@@ -237,6 +275,10 @@ document.addEventListener("DOMContentLoaded", () => {
       rows.forEach((row, i) => {
         const tr = document.createElement("tr");
 
+         if (i > 10) {
+    tr.classList.add("extra-row");
+         }
+
         row.forEach((cell, colIndex) => {
           if (!visibleCols1.includes(colIndex)) return;
 
@@ -249,7 +291,23 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       table1.appendChild(fragment);
+const toggleBtn = document.getElementById("toggleTable");
 
+toggleBtn.addEventListener("click", () => {
+
+  const rows = document.querySelectorAll("#table1 .extra-row");
+
+  const expanded = toggleBtn.dataset.expanded === "true";
+
+  rows.forEach(row => {
+    row.classList.toggle("show", !expanded);
+  });
+
+  toggleBtn.dataset.expanded = !expanded;
+
+  toggleBtn.textContent =
+    expanded ? "Show all decks" : "Top 10 only";
+});
       // =========================
       // TABLE 2
       // =========================
