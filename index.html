@@ -208,8 +208,7 @@ button:hover {
     <div class="border" id="token-winners">
 <h2>Token winners</h2><div class="chart-container">
   <p>How many tokens each deck won</p>
-    <h3>Winner</h3>
-    <h4>UB Faeries</h4>
+  
     <canvas id="chart4"></canvas>
     
 </div>
@@ -513,9 +512,9 @@ function createBarChart(id, labels, data) {
   const canvas = document.getElementById(id);
   const container = canvas.parentElement;
 
-  const rowHeight = 45;
-  const minHeight = 200;
-  const maxHeight = 600;
+  const rowHeight = 35;
+  const minHeight = 150;
+  const maxHeight = 400;
 
   const height = Math.min(
     Math.max(labels.length * rowHeight, minHeight),
@@ -752,10 +751,10 @@ intersect: true,
   const minHeight = 200;
   const maxHeight = 600;
 
-  const height = Math.min(
-    Math.max(labels.length * rowHeight, minHeight),
-    maxHeight
-  );
+const height = Math.min(
+  Math.max(labels.length * rowHeight + 20, minHeight),
+  maxHeight
+);
 
   container.style.height = height + "px";
 
