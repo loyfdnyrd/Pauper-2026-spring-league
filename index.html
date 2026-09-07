@@ -167,7 +167,7 @@ button:hover {
 
 <body>
 
-<h1>Pauper Spring 2026 Summary</h1>
+<h1>Pauper Autumn 2026 Summary</h1>
 <h2>Full meta game and graphs</h2>
 <div class="layout">
 
@@ -194,8 +194,6 @@ button:hover {
 <div class="border">
     <h2>Top 1 placements</h2>
     <p>Number of times a deck placed 1st</p>
-    <h3>Winners</h3>
-    <h4>Caw Gates & U Terror</h4>
     <div class="chart-container">
       <canvas id="chart1"></canvas>
     </div>
@@ -203,8 +201,6 @@ button:hover {
 <div class="border">
     <h2>Top 1 placement rate</h2>
     <p>How often a deck placed 1st</p>
-      <h3>Winner</h3>
-    <h4>Elves</h4>
     <div class="chart-container">
       <canvas id="chart2"></canvas>
     </div>
@@ -512,47 +508,63 @@ toggleBtn.addEventListener("click", () => {
   // =========================
   // BAR CHART
   // =========================
-  function createBarChart(id, labels, data) {
+function createBarChart(id, labels, data) {
 
-    new Chart(document.getElementById(id), {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: barColor,
-          borderRadius: 6,
-          barThickness: 20
-        }]
+  const canvas = document.getElementById(id);
+  const container = canvas.parentElement;
+
+  const rowHeight = 45;
+  const minHeight = 200;
+  const maxHeight = 600;
+
+  const height = Math.min(
+    Math.max(labels.length * rowHeight, minHeight),
+    maxHeight
+  );
+
+  container.style.height = height + "px";
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: barColor,
+        borderRadius: 6,
+        barThickness: 20
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          color: chartText,
+          font: chartFont,
+          formatter: (v) => v + "%"
+        }
       },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          datalabels: {
-            color: chartText,
-            font: chartFont,
-            formatter: (v) => v + "%"
-          }
+
+      scales: {
+        x: {
+          ticks: { display: false },
+          grid: { display: false }
         },
-        scales: {
-          x: {
-            ticks: { display: false },
-            grid: { display: false }
+        y: {
+          ticks: {
+            color: textColor,
+            font: chartFont
           },
-          y: {
-            ticks: {
-              color: textColor,
-              font: chartFont
-            },
-            grid: { display: false }
-          }
+          grid: { display: false }
         }
       }
-    });
-  }
+    }
+  });
+}
 
   // =========================
   // SCATTER CHART 1
@@ -733,55 +745,71 @@ intersect: true,
   // =========================
   function createTokenBarChart(id, labels, data) {
 
-    new Chart(document.getElementById(id), {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: barColor,
-          borderRadius: 6,
-          barThickness: 16
-        }]
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
+  const canvas = document.getElementById(id);
+  const container = canvas.parentElement;
 
-        plugins: {
-          legend: { display: false },
-          datalabels: {
-            color: chartText,
-            font: chartFont
-          },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => `${ctx.raw} tokens`
-            }
-          }
+  const rowHeight = 45;
+  const minHeight = 200;
+  const maxHeight = 600;
+
+  const height = Math.min(
+    Math.max(labels.length * rowHeight, minHeight),
+    maxHeight
+  );
+
+  container.style.height = height + "px";
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: barColor,
+        borderRadius: 6,
+        barThickness: 16
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: { display: false },
+
+        datalabels: {
+          color: chartText,
+          font: chartFont
         },
 
-        scales: {
-          x: {
-            ticks: { display:false,
-              color: textColor,
-              font: chartFont
-            },
-            grid: { display: false }
-          },
-          y: {
-            ticks: {
-              color: textColor,
-              font: chartFont
-            },
-            grid: { display: false }
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.raw} tokens`
           }
         }
-      }
-    });
-  }
+      },
 
+      scales: {
+        x: {
+          ticks: {
+            display: false,
+            color: textColor,
+            font: chartFont
+          },
+          grid: { display: false }
+        },
+        y: {
+          ticks: {
+            color: textColor,
+            font: chartFont
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
   
 
      
