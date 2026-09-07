@@ -382,22 +382,91 @@ toggleBtn.addEventListener("click", () => {
   })
   .filter(Boolean);
       const scatterData = rows.slice(1)
-        .map(r => {
-          const deck = r[0];
-          const appearances = Number(r[1]);
-          const winrate = parseFloat(String(r[5] || "").replace("%", "").trim());
-        
-          
+  .map(r => {
+    const deck = r[0];
+    const appearances = Number(r[1]);
+    const winrate = parseFloat(String(r[5] || "").replace("%", "").trim());
 
-          if (!deck || isNaN(appearances) || isNaN(winrate)   ) return null;
-          
+    if (!deck || isNaN(appearances) || isNaN(winrate) || appearances === 0) {
+      return null;
+    }
 
-          return { deck, appearances, winrate };
-        })
-        .filter(Boolean);
+    return { deck, appearances, winrate };
+  })
+  .filter(Boolean);
 
       createScatterChart("chart3", scatterData);
       createTokenScatter("chart5", tokenScatterData);
+   // =========================
+      // CHART 1 – TOP 1 PLACEMENTS
+      // =========================
+
+      const top1Data = rows.slice(1)
+        .filter(r => Number(r[1]) > 0)
+        .map(r => ({
+          deck: (r[0] || "").trim(),
+          top1s: Number(r[9])
+        }))
+        .filter(d => d.deck && !isNaN(d.top1s) && d.top1s > 0)
+        .sort((a, b) => b.top1s - a.top1s);
+
+      createDoughnutChart(
+        "chart1",
+        top1Data.map(d => d.deck),
+        top1Data.map(d => d.top1s)
+      );
+
+
+      // =========================
+      // CHART 2 – TOP 1 RATE
+      // =========================
+
+      const top1RateData = rows.slice(1)
+        .filter(r => Number(r[1]) > 0)
+        .map(r => ({
+          deck: (r[0] || "").trim(),
+          rate: parseFloat(
+            String(r[10] || "")
+              .replace("%", "")
+              .replace(",", ".")
+              .trim()
+          )
+        }))
+        .filter(d => d.deck && !isNaN(d.rate) && d.rate > 0)
+        .sort((a, b) => b.rate - a.rate);
+
+      createBarChart(
+        "chart2",
+        top1RateData.map(d => d.deck),
+        top1RateData.map(d => d.rate)
+      );
+
+
+      // =========================
+      // CHART 4 – TOKEN WINNERS
+      // =========================
+
+      const tokenData = rows.slice(1)
+        .filter(r => Number(r[1]) > 0)
+        .map(r => ({
+          deck: (r[0] || "").trim(),
+          tokens: Number(
+            String(r[7] || "")
+              .replace(",", ".")
+              .trim()
+          )
+        }))
+        .filter(d => d.deck && !isNaN(d.tokens) && d.tokens > 0)
+        .sort((a, b) => b.tokens - a.tokens);
+
+      createTokenBarChart(
+        "chart4",
+        tokenData.map(d => d.deck),
+        tokenData.map(d => d.tokens)
+      );
+
+
+
     }
   });
 
@@ -715,31 +784,7 @@ intersect: true,
 
   
 
-  // =========================
-  // INIT
-  // =========================
-  createDoughnutChart(
-    "chart1",
-    ['Caw Gates','U Terror','UB Faeries','Dimir Terror','Elves','Jeskai Ephemerate','Grixis Affinity','Jund Wildfire','Walls Combo'],
-    [3,3,2,2,2,1,1,1,1]
-  );
-
-  createBarChart(
-    "chart2",
-    ['Elves','Walls Combo','Dimir Terror','Caw Gates','U Terror','Jund Wildfire','Grixis Affinity','UB Faeries','Jeskai Ephemerate'],
-    [50,50,40,28,21,20,14,12,8]
-  );
-
-  createTokenBarChart(
-    "chart4",
-    [
-      "UB Faeries","G Monster Tron","Mono Red Madness","U Terror","Jeskai Ephemerate",
-      "Caw gates","White Weenie","Grixis Affinity","BG Gardens","Walls Spy",
-      "Dimir Terror","Jund Wildfire","BR Madness","Red Rally","Elves"
-    ],
-    [16,11,9,8,8,7,7,7,6,4,3,3,2,2,2]
-  );
-
+     
 });
 </script>
 </body>
