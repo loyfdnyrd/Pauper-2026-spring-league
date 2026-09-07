@@ -2,7 +2,7 @@
 <html>
 <head>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <title>Pauper 2026 Spring League Summary</title>
+  <title>Pauper 2026 Autumn League Summary</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -272,24 +272,45 @@ document.addEventListener("DOMContentLoaded", () => {
       table1.innerHTML = "";
       const fragment = document.createDocumentFragment();
 
-      rows.forEach((row, i) => {
-        const tr = document.createElement("tr");
+     rows.forEach((row, i) => {
 
-         if (i > 10) {
+  // Behåll headern
+  if (i === 0) {
+    const tr = document.createElement("tr");
+
+    row.forEach((cell, colIndex) => {
+      if (!visibleCols1.includes(colIndex)) return;
+
+      const el = document.createElement("th");
+      el.textContent = (cell || "").trim();
+      tr.appendChild(el);
+    });
+
+    fragment.appendChild(tr);
+    return;
+  }
+
+  // Dölj lekar med 0 appearances
+  const appearances = Number(row[1]);
+
+  if (isNaN(appearances) || appearances === 0) return;
+
+  const tr = document.createElement("tr");
+
+  if (i > 10) {
     tr.classList.add("extra-row");
-         }
+  }
 
-        row.forEach((cell, colIndex) => {
-          if (!visibleCols1.includes(colIndex)) return;
+  row.forEach((cell, colIndex) => {
+    if (!visibleCols1.includes(colIndex)) return;
 
-          const el = document.createElement(i === 0 ? "th" : "td");
-          el.textContent = (cell || "").trim();
-          tr.appendChild(el);
-        });
+    const el = document.createElement("td");
+    el.textContent = (cell || "").trim();
+    tr.appendChild(el);
+  });
 
-        fragment.appendChild(tr);
-      });
-
+  fragment.appendChild(tr);
+});
       table1.appendChild(fragment);
 const toggleBtn = document.getElementById("toggleTable");
 
