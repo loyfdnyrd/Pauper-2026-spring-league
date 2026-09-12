@@ -245,8 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const table1 = document.getElementById("table1");
   const visibleCols1 = [0, 1, 2, 5, 6];
-  const table2 = document.getElementById("table2");
-  const visibleCols2 = [11, 12, 13];
 
   // =========================
   // LOAD CSV
@@ -321,34 +319,7 @@ toggleBtn.addEventListener("click", () => {
   toggleBtn.textContent =
     expanded ? "Show all decks" : "Top 10 only";
 });
-      // =========================
-      // TABLE 2
-      // =========================
-      table2.innerHTML = "";
-      const frag = document.createDocumentFragment();
-
-      rows.forEach((row, i) => {
-         if (i === 0) {
-    // header
-  } else if (i > 8) {
-    return; // skip all rows after row 8
-  }
-        const tr = document.createElement("tr");
-
-        
-
-        row.forEach((cell, colIndex) => {
-          if (!visibleCols2.includes(colIndex)) return;
-
-          const el = document.createElement(i === 0 ? "th" : "td");
-          el.textContent = (cell || "").trim();
-          tr.appendChild(el);
-        });
-
-        frag.appendChild(tr);
-      });
-
-      table2.appendChild(frag);
+     
 
       // =========================
       // SCATTER DATA
